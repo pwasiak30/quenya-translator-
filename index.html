@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quettaparma — słownik i tłumacz quenya ↔ polski</title>
+  <meta name="description" content="Quettaparma — dwukierunkowy słownik quenya-polski z silnikiem deklinacji, koniugacji i budowania zdań. Narzędzie open-source, HTML/CSS/JS." />
+
+  <!-- ===========================================================
+       FONTY — Google Fonts: Inter (tekst) + Red Hat Display (nagłówki)
+       Zgodnie z odgórnym stylem projektu (claude/styl-wizualny.md).
+       Aby zmienić font, podmień linki poniżej oraz zmienne
+       --font-heading i --font-body w style.css
+  ============================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- ===========================================================
+       ANTY-FOUC: ustawia motyw PRZED wyrenderowaniem <body>,
+       żeby uniknąć "mrugnięcia" jasnym tłem przy starcie w dark mode.
+       Musi być zsynchronizowany z kluczem STORAGE_KEY w script.js.
+  ============================================================ -->
+  <script>
+    (function () {
+      var saved = localStorage.getItem('quettaparma-theme');
+      var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- ===========================================================
+       NAWIGACJA + PRZEŁĄCZNIK MOTYWU
+  ============================================================ -->
+  <header class="navbar">
+    <div class="navbar__inner container">
+      <a href="#top" class="navbar__logo" aria-label="Quettaparma — strona główna">
+        <span class="navbar__logo-mark" aria-hidden="true">✦</span>
+        <span>Quetta<strong>parma</strong></span>
+      </a>
+
+      <nav class="navbar__nav" aria-label="Nawigacja główna">
+        <a href="#slownik">Słownik</a>
+        <a href="#zdania">Budowanie zdań</a>
+        <a href="#kalendarz">Kalendarz</a>
+        <a href="#o-projekcie">O projekcie</a>
+      </nav>
+
+      <div class="navbar__actions">
+        <button
+          id="theme-toggle"
+          class="theme-toggle"
+          type="button"
+          aria-pressed="false"
+          aria-label="Przełącz tryb ciemny/jasny"
+        >
+          <svg class="theme-toggle__icon theme-toggle__icon--sun" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg class="theme-toggle__icon theme-toggle__icon--moon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <a class="btn btn--ghost" href="#zdania">Buduj zdanie</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- ===========================================================
+         HERO
+    ============================================================ -->
+    <section class="hero" id="hero">
+      <div class="hero__bg" aria-hidden="true"></div>
+
+      <div class="container hero__inner">
+        <p class="eyebrow">
+          <span class="eyebrow__dot" aria-hidden="true"></span>
+          Quenya ↔ polski · silnik gramatyczny · open-source
+        </p>
+
+        <h1 class="hero__title">
+          Słownik i tłumacz<br />
+          <span class="hero__title-accent">języka quenya.</span>
+        </h1>
+
+        <p class="hero__subtitle">
+          Dwukierunkowa wyszukiwarka słów z pełnym silnikiem deklinacji (10 przypadków)
+          i koniugacji (5 czasów), plus kompozytor zdań budujący gramatycznie poprawne
+          zdania quenya z rozpoznanego słownictwa — w obie strony.
+        </p>
+
+        <div class="hero__cta">
+          <a href="#slownik" class="btn btn--primary">
+            Otwórz słownik
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a href="#zdania" class="btn btn--secondary">Zbuduj zdanie</a>
+        </div>
+
+        <dl class="hero__stats">
+          <div class="hero__stat">
+            <dt>Hasła</dt>
+            <dd id="statWords">–</dd>
+          </div>
+          <div class="hero__stat">
+            <dt>Przypadki</dt>
+            <dd>10 × l.poj./mn.</dd>
+          </div>
+          <div class="hero__stat">
+            <dt>Czasy</dt>
+            <dd>5 (aoryst…perfect)</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         SŁOWNIK — wyszukiwarka + wyniki
+    ============================================================ -->
+    <section class="section" id="slownik">
+      <div class="container">
+        <div class="section__header">
+          <p class="section__label">Słownik</p>
+          <h2 class="section__title">Szukaj po polsku lub w quenya</h2>
+          <p class="section__desc">
+            Działa też na formach odmienionych quenya — np. <code>eldaron</code> (dopełniacz l.mn. od <em>elda</em>) albo <code>matuva</code> (przyszły od <em>mat-</em>, „jeść").
+          </p>
+        </div>
+
+        <div class="search-panel">
+          <div class="search-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="searchInput" type="text" placeholder="np. elda, gwiazda, eldassë, kochać…" autocomplete="off" spellcheck="false">
+            <button class="btn btn--ghost search-clear" id="clearBtn" type="button">wyczyść</button>
+          </div>
+          <div class="hint-row">
+            <span>Spróbuj:</span>
+            <button type="button" data-try="elda">elda</button>
+            <button type="button" data-try="gwiazda">gwiazda</button>
+            <button type="button" data-try="eldaron">eldaron</button>
+            <button type="button" data-try="kochać">kochać</button>
+            <button type="button" data-try="matuva">matuva</button>
+            <button type="button" data-try="woda">woda</button>
+          </div>
+        </div>
+
+        <div class="results-head">
+          <h3>Wyniki</h3>
+          <span class="results-count" id="resultsCount"></span>
+        </div>
+        <div id="results" class="results-list"></div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         KOMPOZYTOR ZDAŃ
+    ============================================================ -->
+    <section class="section section--alt" id="zdania">
+      <div class="container">
+        <div class="section__header">
+          <p class="section__label">Kompozytor zdań</p>
+          <h2 class="section__title">Zbuduj prawdziwe zdanie quenya</h2>
+          <p class="section__desc">
+            Wpisz proste polskie zdanie zbudowane ze słów z listy niżej (podmiot + czasownik
+            + opcjonalnie dopełnienie/przymiotnik) — silnik rozpozna formy, poprawnie odmieni
+            i złoży zdanie quenya wg realnych reguł gramatyki. Działa też w drugą stronę.
+            To <strong>nie jest</strong> tłumacz dowolnego tekstu — poza rozpoznanym słownictwem
+            i wzorcami dostaniesz jasny komunikat, nie zgadywankę.
+          </p>
+        </div>
+
+        <div class="sentence-grid">
+          <div class="sentence-col">
+            <label class="sentence-label" for="plInput">Polski → Quenya</label>
+            <textarea id="plInput" class="sentence-input" rows="2" placeholder="np. Kocham ciebie. / Elf jest dobry. / Kto widzi gwiazdę?"></textarea>
+            <button class="btn btn--primary sentence-btn" id="plToQButton" type="button">Przetłumacz →</button>
+            <div class="sentence-output" id="plToQOutput"></div>
+          </div>
+          <div class="sentence-col">
+            <label class="sentence-label" for="qInput">Quenya → Polski</label>
+            <textarea id="qInput" class="sentence-input" rows="2" placeholder="np. ni mel elyë / elda ná mára / man cena elen?"></textarea>
+            <button class="btn btn--primary sentence-btn" id="qToPlButton" type="button">Przetłumacz →</button>
+            <div class="sentence-output" id="qToPlOutput"></div>
+          </div>
+        </div>
+
+        <div class="sentence-vocab">
+          <h4>Rozpoznawane wzorce zdań</h4>
+          <ul class="pattern-list">
+            <li><b>Podmiot + czasownik (+ dopełnienie):</b> Kocham ciebie. / Elf widzi konia.</li>
+            <li><b>Podmiot + jest/jestem/są + przymiotnik:</b> Jestem silny. / One są piękne.</li>
+            <li><b>Przeczenie:</b> Nie kocham. / Nie jestem zły. <span class="tag-uncertain">niepewna forma quenya</span></li>
+            <li><b>Pytania:</b> Kto widzi konia? / Co jest dobre?</li>
+            <li><b>Fraza przymiotnik + rzeczownik:</b> piękny dom</li>
+            <li><b>Dzierżawczość:</b> dom ojca</li>
+          </ul>
+          <details class="vocab-details">
+            <summary>Słownictwo rozpoznawane w zdaniach (kliknij, by rozwinąć)</summary>
+            <div class="vocab-cols" id="sentenceVocabList"></div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         ZWROTY
+    ============================================================ -->
+    <section class="section" id="zwroty">
+      <div class="container">
+        <div class="section__header section__header--left">
+          <p class="section__label">Zwroty</p>
+          <h2 class="section__title">Pozdrowienia poświadczone w tekstach Tolkiena</h2>
+        </div>
+        <div class="bento-grid phrase-grid" id="phraseGrid"></div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         KALENDARZ
+    ============================================================ -->
+    <section class="section section--alt" id="kalendarz">
+      <div class="container">
+        <div class="section__header section__header--left">
+          <p class="section__label">Kalendarz Eldarów</p>
+          <h2 class="section__title">Sześć pór roku i sześć dni tygodnia</h2>
+          <p class="section__desc">Dodatek D, Władca Pierścieni.</p>
+        </div>
+        <div class="cal-cols">
+          <div class="cal-card">
+            <h3>Pory roku</h3>
+            <div id="seasonsList"></div>
+          </div>
+          <div class="cal-card">
+            <h3>Dni tygodnia</h3>
+            <div id="weekList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         O PROJEKCIE
+    ============================================================ -->
+    <section class="section" id="o-projekcie">
+      <div class="container about">
+        <div class="section__header section__header--left">
+          <p class="section__label">O projekcie</p>
+          <h2 class="section__title">Metodologia i ograniczenia</h2>
+        </div>
+        <div class="about__body">
+          <p>Quenya to jeden z dwóch głównych języków elfów stworzonych przez J.R.R. Tolkiena — nigdy nie została przez niego „dokończona": znamy ją z fragmentów tekstów, listów, esejów i notatek publikowanych pośmiertnie. To, co tu widzisz, to tzw. <b>neo-quenya</b> — spójna rekonstrukcja gramatyki oparta głównie na systemie opisanym przez Helge K. Fauskangera (kurs na Ardalambion), zweryfikowana ręcznie wobec jego słownika <i>Quettaparma Quenyanna</i>.</p>
+          <p><b>Odmiana rzeczowników</b> (10 przypadków × l. poj./mn.) generowana jest regułami zgodnymi z tzw. deklinacją Plotza. Dopełniacz l.poj. dla tematów na -a ściąga się (elda → eldo, nie „eldao"). Celownik, respektyw i przypadki liczby mnogiej poza mianownikiem/biernikiem/dopełniaczem są słabiej poświadczone — traktuj je jako rekonstrukcję.</p>
+          <p><b>Koniugacja czasowników</b> rozróżnia czasowniki tematyczne (na -a) i pierwotne/spółgłoskowe. Czas przeszły czasowników pierwotnych jest w samej quenya nieregularny — stosujemy jeden uproszczony wzorzec. Końcówki zaimkowe celowo pomijamy (paradygmat niejednoznaczny) — osobę wyraża osobny zaimek przed czasownikiem.</p>
+          <p><b>Kompozytor zdań</b> to zamknięty, ręcznie zweryfikowany system: rozpoznaje polskie formy (odmiana rzeczowników/czasowników/przymiotników) tylko dla ok. 80 rzeczowników, 26 czasowników i 22 przymiotników z listy w sekcji wyżej, w kilku wzorcach składniowych. To nie jest ogólny tłumacz maszynowy — poza tym zakresem dostajesz czytelny komunikat, że wzorzec lub słowo nie zostały rozpoznane, zamiast błędnego zgadywania.</p>
+          <p>Słownik zawiera obecnie ok. <b id="wordCount">–</b> ręcznie sprawdzonych haseł. Główne źródła: Helge K. Fauskanger, <i>Quettaparma Quenyanna</i> (ambar-eldaron.com) · Ardalambion, <i>Quenya Course</i> · Tolkien Gateway, <i>Quenya/Grammar</i> · Eldamo.org.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===========================================================
+       SOCIAL FAB — stały, statyczny pasek z linkami autora.
+       OBOWIĄZKOWY na każdej stronie w tym design systemie.
+  ============================================================ -->
+  <nav class="social-fab" aria-label="Media społecznościowe">
+    <ul class="social-fab__list">
+      <li><a class="social-fab__link" href="https://x.com/wasiak_dsm" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">X</a></li>
+      <li><a class="social-fab__link" href="https://www.linkedin.com/in/pwasiak30" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">in</a></li>
+      <li><a class="social-fab__link" href="https://www.youtube.com/@psychologia.wasiak" target="_blank" rel="noopener noreferrer" aria-label="YouTube">YT</a></li>
+      <li><a class="social-fab__link" href="https://www.instagram.com/psychologia.wasiak/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">IG</a></li>
+      <li><a class="social-fab__link" href="https://www.facebook.com/psychologia.wasiak" target="_blank" rel="noopener noreferrer" aria-label="Facebook">FB</a></li>
+      <li><a class="social-fab__link" href="https://github.com/pwasiak30" target="_blank" rel="noopener noreferrer" aria-label="GitHub">GH</a></li>
+      <li><a class="social-fab__link" href="https://mastodon.social/@s3in610" target="_blank" rel="noopener noreferrer" aria-label="Mastodon">MA</a></li>
+      <li><a class="social-fab__link" href="https://linktree.wasiakpawel.pl/" target="_blank" rel="noopener noreferrer" aria-label="Linktree">LT</a></li>
+    </ul>
+  </nav>
+
+  <!-- ===========================================================
+       STOPKA
+  ============================================================ -->
+  <footer class="footer" id="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <a href="#top" class="navbar__logo">
+          <span class="navbar__logo-mark" aria-hidden="true">✦</span>
+          <span>Quetta<strong>parma</strong></span>
+        </a>
+        <p>Słownik i tłumacz quenya ↔ polski. Vanilla HTML/CSS/JS, zero zależności.</p>
+
+        <ul class="social-links" aria-label="Media społecznościowe">
+          <li><a class="social-links__link" href="https://x.com/wasiak_dsm" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">X</a></li>
+          <li><a class="social-links__link" href="https://www.linkedin.com/in/pwasiak30" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">in</a></li>
+          <li><a class="social-links__link" href="https://www.youtube.com/@psychologia.wasiak" target="_blank" rel="noopener noreferrer" aria-label="YouTube">YT</a></li>
+          <li><a class="social-links__link" href="https://www.instagram.com/psychologia.wasiak/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">IG</a></li>
+          <li><a class="social-links__link" href="https://www.facebook.com/psychologia.wasiak" target="_blank" rel="noopener noreferrer" aria-label="Facebook">FB</a></li>
+          <li><a class="social-links__link" href="https://github.com/pwasiak30" target="_blank" rel="noopener noreferrer" aria-label="GitHub">GH</a></li>
+          <li><a class="social-links__link" href="https://mastodon.social/@s3in610" target="_blank" rel="noopener noreferrer" aria-label="Mastodon">MA</a></li>
+          <li><a class="social-links__link" href="https://linktree.wasiakpawel.pl/" target="_blank" rel="noopener noreferrer" aria-label="Linktree">LT</a></li>
+        </ul>
+      </div>
+
+      <nav class="footer__links" aria-label="Linki w stopce">
+        <div>
+          <h4>Narzędzie</h4>
+          <a href="#slownik">Słownik</a>
+          <a href="#zdania">Budowanie zdań</a>
+          <a href="#o-projekcie">Metodologia</a>
+        </div>
+        <div>
+          <h4>Źródła</h4>
+          <a href="https://ambar-eldaron.com" target="_blank" rel="noopener noreferrer">Quettaparma Quenyanna</a>
+          <a href="https://eldamo.org" target="_blank" rel="noopener noreferrer">Eldamo.org</a>
+        </div>
+        <div>
+          <h4>Społeczność</h4>
+          <a href="https://github.com/pwasiak30" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+      </nav>
+    </div>
+
+    <div class="container footer__bottom">
+      <p>© <span id="year"></span> Quettaparma. Na podstawie prac J.R.R. Tolkiena i badaczy neo-quenya.</p>
+      <p class="footer__portfolio">Więcej projektów: <a href="https://linktree.wasiakpawel.pl/" target="_blank" rel="noopener noreferrer">portfolio Pawła Wasiaka</a></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
